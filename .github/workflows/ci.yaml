@@ -1,0 +1,56 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  php-tests:
+    runs-on: ubuntu-latest
+
+    services:
+      mysql:
+        image: mysql:8.0
+        env:
+          MYSQL_DATABASE: symfony_db
+          MYSQL_USER: symfony
+          MYSQL_PASSWORD: symfony
+          MYSQL_ROOT_PASSWORD: root
+        ports:
+          - 3306:3306
+        options: >-
+          --health-cmd="mysqladmin ping -h 127.0.0.1 -uroot -proot"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=10
+          --health-start-period=20s
+
+    env:
+      DATABASE_URL: "mysql://symfony:symfony@127.0.0.1:3306/symfony_db?serverVersion=8.0&charset=utf8mb4"
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup PHP 8.4
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: "8.4"
+          extensions: pdo_mysql, intl, mbstring
+
+      - name: Install dependencies
+        run: composer install --no-interaction --no-progress
+
+      - name: Wait for MySQL
+        run: |
+          until mysqladmin ping -h 127.0.0.1 -uroot -proot --silent; do
+            sleep 2
+          done
+
+      - name: Run migrations
+        run: php app/bin/console doctrine:database:create --if-not-exists
+
+      - name: Run tests
+        run: echo "No tests yet"

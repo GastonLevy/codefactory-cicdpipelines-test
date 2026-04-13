@@ -1,0 +1,38 @@
+services:
+  database:
+    image: mysql:8.0
+    container_name: symfony_mysql
+    restart: unless-stopped
+    environment:
+      MYSQL_DATABASE: symfony_db
+      MYSQL_USER: symfony
+      MYSQL_PASSWORD: symfony
+      MYSQL_ROOT_PASSWORD: root
+    ports:
+      - "3306:3306"
+    volumes:
+      - database_data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "127.0.0.1", "-uroot", "-proot"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 20s
+
+  phpmyadmin:
+    image: phpmyadmin:latest
+    container_name: symfony_phpmyadmin
+    restart: unless-stopped
+    depends_on:
+      database:
+        condition: service_healthy
+    environment:
+      PMA_HOST: database
+      PMA_PORT: 3306
+      PMA_USER: symfony
+      PMA_PASSWORD: symfony
+    ports:
+      - "8080:80"
+
+volumes:
+  database_data:
