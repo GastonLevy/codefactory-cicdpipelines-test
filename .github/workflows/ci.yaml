@@ -41,6 +41,7 @@ jobs:
           extensions: pdo_mysql, intl, mbstring
 
       - name: Install dependencies
+        working-directory: app
         run: composer install --no-interaction --no-progress
 
       - name: Wait for MySQL
